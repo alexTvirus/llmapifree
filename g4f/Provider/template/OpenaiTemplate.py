@@ -272,6 +272,17 @@ class OpenaiTemplate(AsyncGeneratorProvider, ProviderModelMixin, RaiseErrorMixin
                 )
         if cls.needs_auth and api_key is None:
             raise MissingAuthError('Add a "api_key"')
+        # Split proxy-routing directives out of the caller-supplied headers.
+        # "url-to-send" overrides the request destination (a proxy endpoint
+        # that forwards the request to the real target). The remaining keys
+        # (e.g. "real-url-request", "real-domain-request", "realip",
+        # "realport") are forwarded as HTTP headers so the proxy knows where
+        # to send the request on the caller's behalf.
+        if headers:
+            headers = dict(headers)
+            send_url = headers.pop("url-to-send", None)
+        else:
+            send_url = None
         async with StreamSession(
             proxy=proxy,
             headers=cls.get_headers(stream, api_key, headers),
@@ -308,8 +319,12 @@ class OpenaiTemplate(AsyncGeneratorProvider, ProviderModelMixin, RaiseErrorMixin
                         ),
                         None,
                     )
+                image_endpoint = (
+                    send_url if send_url is not None
+                    else f"{base_url.rstrip('/')}/images/generations"
+                )
                 async with session.post(
-                    f"{base_url.rstrip('/')}/images/generations", json=data, ssl=cls.ssl
+                    image_endpoint, json=data, ssl=cls.ssl
                 ) as response:
                     content_type = response.headers.get("content-type", "")
                     if content_type.startswith("application/json"):
@@ -377,6 +392,8 @@ class OpenaiTemplate(AsyncGeneratorProvider, ProviderModelMixin, RaiseErrorMixin
                     api_endpoint = cls.api_endpoint
                 if api_endpoint is None:
                     api_endpoint = f"{base_url.rstrip('/')}/chat/completions"
+            if send_url is not None:
+                api_endpoint = send_url
             if yield_request:
                 yield JsonRequest.from_dict(data)
             async with session.post(api_endpoint, json=data, ssl=cls.ssl) as response:

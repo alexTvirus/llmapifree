@@ -52,6 +52,7 @@ class RequestConfig(BaseModel):
     download_media: bool = False
     raw: bool = False
     extra_body: Optional[dict] = None
+    headers: Optional[dict] = None
     prompt_cache_key: Optional[str] = None
     # When set (or when env G4F_TOOL_EMULATION=1), the server will attempt to
     # emulate OpenAI tool_calls for providers that don't support tools natively.
@@ -114,6 +115,7 @@ class MessagesConfig(BaseModel):
     ] = None
     raw: bool = False
     extra_body: Optional[dict] = None
+    headers: Optional[dict] = None
     tool_emulation: Optional[bool] = None
 
 
