@@ -123,6 +123,11 @@ Table of contents
      -v ${PWD}/generated_media:/app/generated_media \
      hlohaus789/g4f:latest
    ```
+
+docker run -p 8080:8080 -p 7900:7900 \
+  --shm-size="2g" \
+  hlohaus789/g4f:latest
+   
 Notes:
 - Port 8080 serves GUI/API; 7900 can expose a VNC-like desktop for provider logins (optional).
 - Increase --shm-size for heavier browser automation tasks.
